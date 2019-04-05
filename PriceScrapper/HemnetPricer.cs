@@ -11,6 +11,7 @@ namespace PriceScrapper
     public class HemnetPricer
     {
         private const string HEMNET_PREFIX = "https://www.hemnet.se/salda/bostader?";
+        private const string HEMNET_AREA_ID_PREFIX = "https://www.hemnet.se/locations/show?q=";
         private List<string> m_locationIds;
         private List<string> m_itemTypes;
         private string m_timeSpan;
@@ -28,6 +29,20 @@ namespace PriceScrapper
             return m_returnedPriceInfo;
         }
 
+        public static async Task<string> GetAreaId(string query)
+        {
+            HttpClient client = new HttpClient();
+            string url = HEMNET_AREA_ID_PREFIX + query;
+            using (var response = await client.GetAsync(url))
+            {
+                using (var content = response.Content)
+                {
+                    var result = await content.ReadAsStringAsync();
+                    return result;
+                }
+            }
+            
+        }
         public async Task DoRequest()
         {
             string locationIdsQuery = String.Join("", m_locationIds.Select(location => "&location_ids[]=" + location).ToArray());

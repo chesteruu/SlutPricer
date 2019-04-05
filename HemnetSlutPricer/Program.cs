@@ -8,6 +8,11 @@ namespace HemnetSlutPricer
     {
         static void Main(string[] args)
         {
+            var result = HemnetPricer.GetAreaId("skarpang");
+
+            result.Wait();
+
+            Console.WriteLine(result.Result);
             PriceScrapper.HemnetPricer hemnetPricer = new HemnetPricer(new List<string> { "473319" }, new List<string>{"villa"}, "48m");
             hemnetPricer.DoRequest().Wait();
 
