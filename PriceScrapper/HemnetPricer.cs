@@ -1,13 +1,26 @@
-﻿using System;
-using System.Linq;
+﻿using HtmlAgilityPack;
+using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
-using System.Text;
-using HtmlAgilityPack;
+using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 
 namespace PriceScrapper
 {
+    public class HemnetLocations
+    {
+        public Int64 id;
+        public string name;
+        public string location_type;
+        public string slug;
+        public HemnetLocations parent_location;
+
+        public override string ToString()
+        {
+            return JsonConvert.SerializeObject(this);
+        }
+    }
     public class HemnetPricer
     {
         private const string HEMNET_PREFIX = "https://www.hemnet.se/salda/bostader?";
@@ -29,7 +42,7 @@ namespace PriceScrapper
             return m_returnedPriceInfo;
         }
 
-        public static async Task<string> GetAreaId(string query)
+        public static async Task<HemnetLocations[]> GetAreaId(string query)
         {
             HttpClient client = new HttpClient();
             string url = HEMNET_AREA_ID_PREFIX + query;
@@ -38,7 +51,8 @@ namespace PriceScrapper
                 using (var content = response.Content)
                 {
                     var result = await content.ReadAsStringAsync();
-                    return result;
+                    HemnetLocations[] hemnetLocations = JsonConvert.DeserializeObject<HemnetLocations[]>(result);
+                    return hemnetLocations;
                 }
             }
             

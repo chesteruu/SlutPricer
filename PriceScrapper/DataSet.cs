@@ -1,4 +1,6 @@
 ﻿using System;
+using System.IO;
+using Newtonsoft;
 
 namespace PriceScrapper
 {
@@ -21,5 +23,15 @@ namespace PriceScrapper
             return String.Format("Address: {0}| Area: {1}| City: {2}| LivingSize: {3}| BiSize: {4}| YardSize: {5}|" +
                 " Price: {6}| SoldTime: {7}| PriceChange: {8}%|", Address, Area, City, LivingSize, BiSize, YardSize, Price, SoldTime.ToShortDateString(), PriceChange);
         }
+
+        public string ToJson()
+        {
+            StringWriter sw = new StringWriter();
+            Newtonsoft.Json.JsonSerializer jsonSerializer = new Newtonsoft.Json.JsonSerializer();
+            jsonSerializer.Serialize(sw, this);
+
+            return sw.ToString();
+        }
+        
     }
 }

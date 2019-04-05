@@ -11,8 +11,8 @@ namespace HemnetSlutPricer
             var result = HemnetPricer.GetAreaId("skarpang");
 
             result.Wait();
-
-            Console.WriteLine(result.Result);
+            var locations = result.Result;
+            
             PriceScrapper.HemnetPricer hemnetPricer = new HemnetPricer(new List<string> { "473319" }, new List<string>{"villa"}, "48m");
             hemnetPricer.DoRequest().Wait();
 
@@ -24,9 +24,10 @@ namespace HemnetSlutPricer
             {
                 Console.WriteLine("Searched Time: " + priceInfoList[0].SoldTime.ToShortDateString() + " => " + priceInfoList[priceInfoList.Count-1].SoldTime.ToShortDateString());
             }
+
             foreach (var priceInfo in hemnetPricer.GetPriceInfoList())
             {
-                Console.WriteLine(priceInfo);
+                Console.WriteLine(priceInfo.ToJson());
             }
         }
     }
