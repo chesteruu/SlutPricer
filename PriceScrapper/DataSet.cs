@@ -20,8 +20,8 @@ namespace PriceScrapper
 
         public override string ToString()
         {
-            return String.Format("Address: {0}| Area: {1}| City: {2}| LivingSize: {3}| BiSize: {4}| YardSize: {5}|" +
-                " Price: {6}| SoldTime: {7}| PriceChange: {8}%|", Address, Area, City, LivingSize, BiSize, YardSize, Price, SoldTime.ToShortDateString(), PriceChange);
+            return String.Format("Address; {0}| Area; {1}| City; {2}| LivingSize; {3}| BiSize; {4}| YardSize; {5}|" +
+                " Price; {6}| SoldTime; {7}| PriceChange; {8}%| Rooms; {9}|", Address, Area, City, LivingSize, BiSize, YardSize, Price, SoldTime.ToShortDateString(), PriceChange, Rooms);
         }
 
         public string ToJson()
