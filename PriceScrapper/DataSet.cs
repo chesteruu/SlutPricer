@@ -17,6 +17,7 @@ namespace PriceScrapper
         public double YardSize;
         public DateTime SoldTime;
         public double PriceChange;
+        public string Type;
 
         public override string ToString()
         {

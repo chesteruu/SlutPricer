@@ -2,8 +2,10 @@
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Web;
 
@@ -42,6 +44,12 @@ namespace PriceScrapper
             m_timeSpan = timeSpan;
         }
 
+        private List<PriceInfo> m_returnedPriceInfo = new List<PriceInfo>();
+        public List<PriceInfo> GetPriceInfoList()
+        {
+            return m_returnedPriceInfo;
+        }
+
         public static async Task<BooliLocations[]> GetAreaId(string query)
         {
             query = HttpUtility.UrlEncode(query);
@@ -60,7 +68,7 @@ namespace PriceScrapper
 
         public async Task DoRequest()
         {
-            if (m_timeSpan.EndsWith("m"))
+            if (!m_timeSpan.EndsWith("m"))
             {
                 return;
             }
@@ -73,7 +81,7 @@ namespace PriceScrapper
                 throw new Exception("Wrong time, it should be <number>m, e.g. 36m");
             }
 
-            string locationIdsQuery = "/" + String.Join(",", m_locationIds.ToArray()) +"/";
+            string locationIdsQuery = "/" + String.Join(",", m_locationIds.ToArray()) + "/?";
             string itemTypesQuery = "&objectType=" + String.Join(",", m_itemTypes.ToArray());
             string minSoldDate = "&minSoldDate=" + DateTime.Now.AddMonths(-month).ToShortDateString();
             string maxSoldDate = "&maxSoldDate=" + DateTime.Now.ToShortDateString();
@@ -115,13 +123,80 @@ namespace PriceScrapper
 
                                 switch (property.Attributes["class"].Value)
                                 {
-                                    
+                                    case "search-list__column search-list__column--price-change":
+                                        {
+                                            var sizeNode = property.SelectSingleNode("./text()[last()]")?.InnerText.Trim().Replace("%", "");
+                                            double.TryParse(sizeNode, out priceInfo.PriceChange);
+                                            break;
+                                        }
+                                    case "search-list__column search-list__column--info-1":
+                                        {
+                                            priceInfo.Address = property.SelectSingleNode("./span[@class='search-list__row search-list__row--address']")?.InnerText.Trim();
+
+                                            var sizeNode = property.SelectSingleNode("./span[@class='search-list__row'][1]")?.InnerText.Trim();
+                                            if (sizeNode.Contains(","))
+                                            {
+                                                var rowStrings = sizeNode?.Split(" ");
+                                                double.TryParse(rowStrings[0], out priceInfo.Rooms);
+                                                if (priceInfo.Rooms == 0)
+                                                {
+                                                    break;
+                                                }
+                                                if (rowStrings.Count() > 3)
+                                                {
+                                                    priceInfo.LivingSize = double.Parse(rowStrings?[2]);
+                                                    if (rowStrings.Count() == 6)
+                                                    {
+                                                        priceInfo.BiSize = double.Parse(rowStrings?[4]);
+                                                    }
+                                                }
+                                            }
+                                            else
+                                            {
+                                                var rowStrings = sizeNode?.Split(" ");
+                                                priceInfo.Rooms = 0;
+                                                if(rowStrings.Count() >= 2)
+                                                {
+                                                    priceInfo.LivingSize = double.Parse(rowStrings?[0]);
+                                                    if(sizeNode.Contains("+"))
+                                                    {
+                                                        priceInfo.BiSize = double.Parse(rowStrings?[3]);
+                                                    }
+                                                }
+                                            }
+
+                                            var areaNode = property.SelectSingleNode("./span[@class='search-list__row'][2]")?.InnerText.Trim();
+                                            var rowSplitStrings = areaNode?.Split(",");
+                                            priceInfo.Type = rowSplitStrings?[0].Trim();
+                                            priceInfo.Area = rowSplitStrings?[1].Trim();
+
+                                            break;
+                                        }
+                                    case "search-list__column search-list__column--info-2":
+                                        {
+                                            var price = property.SelectSingleNode("./span[@class='search-list__row search-list__row--price']")?.InnerText.Trim().Replace(" ", "").Replace("kr", "");
+                                            double.TryParse(price, out priceInfo.Price);
+
+                                            var yard = property.SelectSingleNode("./span[@class='search-list__row']")?.InnerText.Trim();
+                                            var yardStrings = yard?.Split(" ");
+                                            if (yardStrings.Count() >= 2)
+                                            {
+                                                DateTime.TryParse(yardStrings?[1].Trim(), out priceInfo.SoldTime);
+                                            }
+
+                                            var date = property.SelectSingleNode("./span[@class='search-list__row search-list__row--sold-date']")?.InnerText.Trim();
+                                            DateTime.TryParse(date, out priceInfo.SoldTime);
+                                            break;
+                                        }
                                 }
                             }
+                            m_returnedPriceInfo.Add(priceInfo);
                         }
-
                     }
                 }
+
+                // If too quick, it may reject call
+                Thread.Sleep(50);
             }
         }
     }

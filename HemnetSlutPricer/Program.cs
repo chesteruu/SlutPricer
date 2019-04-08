@@ -78,6 +78,28 @@ namespace HemnetSlutPricer
 
                     BooliPricer booliPricer = new BooliPricer(locationIds, type, args[3]);
                     booliPricer.DoRequest().Wait();
+                    var priceInfoList = booliPricer.GetPriceInfoList();
+
+                    using (StreamWriter sw = new StreamWriter(args[4]))
+                    {
+
+                        sw.WriteLine("Total Object: " + priceInfoList.Count);
+                        Console.WriteLine("Total Object: " + priceInfoList.Count);
+
+                        if (priceInfoList.Count > 0)
+                        {
+                            sw.WriteLine("Searched Time: " + priceInfoList[0].SoldTime.ToShortDateString() + " => " + priceInfoList[priceInfoList.Count - 1].SoldTime.ToShortDateString());
+                            Console.WriteLine("Searched Time: " + priceInfoList[0].SoldTime.ToShortDateString() + " => " + priceInfoList[priceInfoList.Count - 1].SoldTime.ToShortDateString());
+                        }
+
+                        foreach (var priceInfo in booliPricer.GetPriceInfoList())
+                        {
+                            sw.WriteLine(priceInfo.ToJson());
+                            Console.WriteLine(priceInfo.ToString());
+                        }
+
+                    }
+
                 }
             }
         }
