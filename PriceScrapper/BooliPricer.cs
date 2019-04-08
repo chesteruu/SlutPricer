@@ -53,6 +53,7 @@ namespace PriceScrapper
         public static async Task<BooliLocations[]> GetAreaId(string query)
         {
             query = HttpUtility.UrlEncode(query);
+            query = query.Replace("+", "%20");
             HttpClient client = new HttpClient();
             string url = BOOLI_AREA_ID_PREFIX + query;
             using (var response = await client.GetAsync(url))
