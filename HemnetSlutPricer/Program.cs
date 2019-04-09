@@ -38,27 +38,22 @@ namespace HemnetSlutPricer
 
                 var priceInfos = task.Result;
 
-                PriceScrapper.HemnetPricer hemnetPricer = new HemnetPricer(locationIds, type, args[3]);
-                hemnetPricer.DoRequest().Wait();
-
-                var priceInfoList = hemnetPricer.GetPriceInfoList();
-
                 using (StreamWriter sw = new StreamWriter(args[4]))
                 {
 
-                    sw.WriteLine("Total Object: " + priceInfoList.Count);
-                    Console.WriteLine("Total Object: " + priceInfoList.Count);
+                    sw.WriteLine("Total Object: " + priceInfos.Count);
+                    Console.WriteLine("Total Object: " + priceInfos.Count);
 
-                    if (priceInfoList.Count > 0)
+                    if (priceInfos.Count > 0)
                     {
-                        sw.WriteLine("Searched Time: " + priceInfoList[0].SoldTime.ToShortDateString() + " => " + priceInfoList[priceInfoList.Count - 1].SoldTime.ToShortDateString());
-                        Console.WriteLine("Searched Time: " + priceInfoList[0].SoldTime.ToShortDateString() + " => " + priceInfoList[priceInfoList.Count - 1].SoldTime.ToShortDateString());
+                        sw.WriteLine("Searched Time: " + priceInfos[0].SoldTime.ToShortDateString() + " => " + priceInfos[priceInfos.Count - 1].SoldTime.ToShortDateString());
+                        Console.WriteLine("Searched Time: " + priceInfos[0].SoldTime.ToShortDateString() + " => " + priceInfos[priceInfos.Count - 1].SoldTime.ToShortDateString());
                     }
 
-                    foreach (var priceInfo in hemnetPricer.GetPriceInfoList())
+                    foreach (var priceInfo in priceInfos)
                     {
                         sw.WriteLine(priceInfo.ToJson());
-                        Console.WriteLine(priceInfoList.ToString());
+                        Console.WriteLine(priceInfo.ToString());
                     }
 
                 }
