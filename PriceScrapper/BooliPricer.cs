@@ -18,17 +18,34 @@ namespace PriceScrapper
         public string type;
         public string url;
     }
-    public class BooliLocations
+
+    public class BooliLocations : ILocations
     {
         public BooliArea area;
         public string label;
         public string type;
+
+        public string GetAreaName()
+        {
+            return label;
+        }
+
+        public long GetId()
+        {
+            return area.id;
+        }
+
+        public string GetName()
+        {
+            return area.name;
+        }
+
         public override string ToString()
         {
             return JsonConvert.SerializeObject(this);
         }
     }
-    public class BooliPricer
+    public class BooliPricer : IScrapper
     {
         private const string BOOLI_PREFIX = "https://www.booli.se/slutpriser/";
         private const string BOOLI_AREA_ID_PREFIX = "https://www.booli.se/search/suggestions?q=";
@@ -37,6 +54,8 @@ namespace PriceScrapper
         private List<string> m_itemTypes;
         private string m_timeSpan;
 
+        private List<PriceInfo> m_returnedPriceInfo = new List<PriceInfo>();
+
         public BooliPricer(List<string> locationId, List<string> itemTypes, string timeSpan)
         {
             m_locationIds = locationId;
@@ -44,13 +63,12 @@ namespace PriceScrapper
             m_timeSpan = timeSpan;
         }
 
-        private List<PriceInfo> m_returnedPriceInfo = new List<PriceInfo>();
-        public List<PriceInfo> GetPriceInfoList()
+        public async Task<ILocations[]> GetAreaId(string query)
         {
-            return m_returnedPriceInfo;
+            return await BooliPricer.GetAreaIdStatic(query);
         }
 
-        public static async Task<BooliLocations[]> GetAreaId(string query)
+        public static async Task<ILocations[]> GetAreaIdStatic(string query)
         {
             query = HttpUtility.UrlEncode(query);
             query = query.Replace("+", "%20");
@@ -67,15 +85,15 @@ namespace PriceScrapper
             }
         }
 
-        public async Task DoRequest()
+        public async Task<List<PriceInfo>> DoRequest()
         {
+            m_returnedPriceInfo.Clear();
             if (!m_timeSpan.EndsWith("m"))
             {
-                return;
+                return m_returnedPriceInfo;
             }
 
-            int month = 0;
-            int.TryParse(m_timeSpan.Substring(0, m_timeSpan.IndexOf('m')), out month);
+            int.TryParse(m_timeSpan.Substring(0, m_timeSpan.IndexOf('m')), out int month);
 
             if (month == 0)
             {
@@ -199,6 +217,13 @@ namespace PriceScrapper
                 // If too quick, it may reject call
                 Thread.Sleep(50);
             }
+
+            return m_returnedPriceInfo;
+        }
+
+        public List<PriceInfo> GetPriceInfos()
+        {
+            return m_returnedPriceInfo;
         }
     }
 }

@@ -19,25 +19,11 @@ namespace HemnetSlutPricer
 
             if(args.Count() == 3)
             {
-                if(args[1] == "hemnet")
-                {
-                    var result = HemnetPricer.GetAreaId(args[2]);
-
-                    result.Wait();
-                    var locations = result.Result;
-                    Console.WriteLine(String.Join("\n", locations.Select(x => x.id.ToString() + "\t" + x.name + "\t\t" + x.parent_location.name).ToArray()));
-                    return;
-                }
-                
-                if(args[1] == "booli")
-                {
-                    var result = BooliPricer.GetAreaId(args[2]);
-
-                    result.Wait();
-                    var locations = result.Result;
-                    Console.WriteLine(String.Join("\n", locations.Select(x => x.area.id.ToString() + "\t" + x.area.name + "\t" + x.area.url + "\t\t" + x.label).ToArray()));
-                    return;
-                }
+                var task = ScrapperFactory.GetLocations(args[1], args[2]);
+                Console.WriteLine("Waiting result from providers...");
+                task.Wait();
+                var locations = task.Result;
+                Console.WriteLine(String.Join("\n", locations.Select(x => x.GetId() + "\t" + x.GetName() + "\t" + x.GetAreaName()).ToArray()));
             }
 
             if (args.Count() == 6)
@@ -45,59 +31,34 @@ namespace HemnetSlutPricer
                 List<string> locationIds = args[1].Split(";").ToList();
                 List<string> type = args[2].Split(";").ToList();
 
-                if (args[5] == "hemnet")
+                IScrapper scrapper = ScrapperFactory.GetScrapper(args[5], locationIds, type, args[3]);
+                var task = scrapper.DoRequest();
+                Console.WriteLine("Waiting result from providers...");
+                task.Wait();
+
+                var priceInfos = task.Result;
+
+                PriceScrapper.HemnetPricer hemnetPricer = new HemnetPricer(locationIds, type, args[3]);
+                hemnetPricer.DoRequest().Wait();
+
+                var priceInfoList = hemnetPricer.GetPriceInfoList();
+
+                using (StreamWriter sw = new StreamWriter(args[4]))
                 {
-                    PriceScrapper.HemnetPricer hemnetPricer = new HemnetPricer(locationIds, type, args[3]);
-                    hemnetPricer.DoRequest().Wait();
 
-                    var priceInfoList = hemnetPricer.GetPriceInfoList();
+                    sw.WriteLine("Total Object: " + priceInfoList.Count);
+                    Console.WriteLine("Total Object: " + priceInfoList.Count);
 
-                    using (StreamWriter sw = new StreamWriter(args[4]))
+                    if (priceInfoList.Count > 0)
                     {
-
-                        sw.WriteLine("Total Object: " + priceInfoList.Count);
-                        Console.WriteLine("Total Object: " + priceInfoList.Count);
-
-                        if (priceInfoList.Count > 0)
-                        {
-                            sw.WriteLine("Searched Time: " + priceInfoList[0].SoldTime.ToShortDateString() + " => " + priceInfoList[priceInfoList.Count - 1].SoldTime.ToShortDateString());
-                            Console.WriteLine("Searched Time: " + priceInfoList[0].SoldTime.ToShortDateString() + " => " + priceInfoList[priceInfoList.Count - 1].SoldTime.ToShortDateString());
-                        }
-
-                        foreach (var priceInfo in hemnetPricer.GetPriceInfoList())
-                        {
-                            sw.WriteLine(priceInfo.ToJson());
-                            Console.WriteLine(priceInfo.ToString());
-                        }
-
+                        sw.WriteLine("Searched Time: " + priceInfoList[0].SoldTime.ToShortDateString() + " => " + priceInfoList[priceInfoList.Count - 1].SoldTime.ToShortDateString());
+                        Console.WriteLine("Searched Time: " + priceInfoList[0].SoldTime.ToShortDateString() + " => " + priceInfoList[priceInfoList.Count - 1].SoldTime.ToShortDateString());
                     }
-                }
 
-                if(args[5] == "booli")
-                {
-
-                    BooliPricer booliPricer = new BooliPricer(locationIds, type, args[3]);
-                    booliPricer.DoRequest().Wait();
-                    var priceInfoList = booliPricer.GetPriceInfoList();
-
-                    using (StreamWriter sw = new StreamWriter(args[4]))
+                    foreach (var priceInfo in hemnetPricer.GetPriceInfoList())
                     {
-
-                        sw.WriteLine("Total Object: " + priceInfoList.Count);
-                        Console.WriteLine("Total Object: " + priceInfoList.Count);
-
-                        if (priceInfoList.Count > 0)
-                        {
-                            sw.WriteLine("Searched Time: " + priceInfoList[0].SoldTime.ToShortDateString() + " => " + priceInfoList[priceInfoList.Count - 1].SoldTime.ToShortDateString());
-                            Console.WriteLine("Searched Time: " + priceInfoList[0].SoldTime.ToShortDateString() + " => " + priceInfoList[priceInfoList.Count - 1].SoldTime.ToShortDateString());
-                        }
-
-                        foreach (var priceInfo in booliPricer.GetPriceInfoList())
-                        {
-                            sw.WriteLine(priceInfo.ToJson());
-                            Console.WriteLine(priceInfo.ToString());
-                        }
-
+                        sw.WriteLine(priceInfo.ToJson());
+                        Console.WriteLine(priceInfoList.ToString());
                     }
 
                 }

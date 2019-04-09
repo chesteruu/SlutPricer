@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace PriceScrapper
 {
-    public class HemnetLocations
+    public class HemnetLocations :  ILocations
     {
         public Int64 id;
         public string name;
@@ -16,12 +16,28 @@ namespace PriceScrapper
         public string slug;
         public HemnetLocations parent_location;
 
+        public string GetAreaName()
+        {
+            return parent_location?.name;
+        }
+
+        public long GetId()
+        {
+            return id;
+        }
+
+        public string GetName()
+        {
+            return name;
+        }
+
         public override string ToString()
         {
             return JsonConvert.SerializeObject(this);
         }
     }
-    public class HemnetPricer
+
+    public class HemnetPricer : IScrapper
     {
         private const string HEMNET_PREFIX = "https://www.hemnet.se/salda/bostader?";
         private const string HEMNET_AREA_ID_PREFIX = "https://www.hemnet.se/locations/show?q=";
@@ -42,7 +58,12 @@ namespace PriceScrapper
             return m_returnedPriceInfo;
         }
 
-        public static async Task<HemnetLocations[]> GetAreaId(string query)
+        public async Task<ILocations[]> GetAreaId(string query)
+        {
+            return await GetAreaIdStatic(query);
+        }
+
+        public static async Task<ILocations[]> GetAreaIdStatic(string query)
         {
             HttpClient client = new HttpClient();
             string url = HEMNET_AREA_ID_PREFIX + query;
@@ -57,7 +78,7 @@ namespace PriceScrapper
             }
 
         }
-        public async Task DoRequest()
+        public async Task<List<PriceInfo>> DoRequest()
         {
             string locationIdsQuery = String.Join("", m_locationIds.Select(location => "&location_ids[]=" + location).ToArray());
             string itemTypesQuery = String.Join("", m_itemTypes.Select(item => "&item_types[]=" + item).ToArray());
@@ -174,6 +195,13 @@ namespace PriceScrapper
                     }
                 }
             }
+
+            return m_returnedPriceInfo;
+        }
+
+        public List<PriceInfo> GetPriceInfos()
+        {
+            return m_returnedPriceInfo;
         }
     }
 }
