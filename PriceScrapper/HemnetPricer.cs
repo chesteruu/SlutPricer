@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace PriceScrapper
 {
-    public class HemnetLocations :  ILocations
+    public class HemnetLocations : ILocations
     {
         public Int64 id;
         public string name;
@@ -112,7 +112,9 @@ namespace PriceScrapper
 
                         foreach (var node in resultNodes)
                         {
+
                             PriceInfo priceInfo = new PriceInfo();
+                            bool isAdd = true;
                             foreach (var property in node.ChildNodes)
                             {
                                 if (!property.HasAttributes)
@@ -133,11 +135,23 @@ namespace PriceScrapper
                                         {
                                             // Room Size
                                             var sizeNode = property.SelectSingleNode("./div[@class='clear-children']/div/text()[last()]")?.InnerText.Trim();
-                                            var values = sizeNode.Split("&nbsp;");
-                                            if (values.Count() == 4)
+                                            var values = sizeNode?.Split("&nbsp;");
+                                            if (values?.Count() == 4)
                                             {
                                                 double.TryParse(values[0].Trim(), out priceInfo.LivingSize);
                                                 double.TryParse(values[2].Trim(), out priceInfo.Rooms);
+                                            }
+
+                                            if (priceInfo.LivingSize == 0)
+                                            {
+                                                isAdd = false;
+                                                break;
+                                            }
+
+                                            if (property.SelectSingleNode("./div[@class='clear-children']/div[@class='sold-property-listing__fee']") != null)
+                                            {
+                                                isAdd = false;
+                                                break;
                                             }
                                             // Yard Size
                                             var yardNode = property.SelectSingleNode("./div[@class='sold-property-listing__land-area sold-property-listing--left']");
@@ -167,7 +181,7 @@ namespace PriceScrapper
                                             // Time
                                             var timeNode = property.SelectSingleNode("./div[2]").InnerText.Trim().Replace("&nbsp;", "");
                                             var timeString = timeNode.Substring(priceNode.IndexOf("Såld") + 5);
-                                            if(!DateTime.TryParse(timeString, out priceInfo.SoldTime))
+                                            if (!DateTime.TryParse(timeString, out priceInfo.SoldTime))
                                             {
                                                 timeNode = property.SelectSingleNode("./div[2]/div[1]").InnerText.Trim().Replace("&nbsp;", "");
                                                 timeString = timeNode.Substring(priceNode.IndexOf("Såld") + 5);
@@ -189,7 +203,8 @@ namespace PriceScrapper
                                         }
                                 }
                             }
-                            m_returnedPriceInfo.Add(priceInfo);
+                            if (isAdd)
+                                m_returnedPriceInfo.Add(priceInfo);
                         }
 
                     }
