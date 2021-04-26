@@ -13,7 +13,7 @@ namespace HemnetSlutPricer
             if(args.Count() == 0)
             {
                 Console.WriteLine("pricer location <hemnet|booli> <area>");
-                Console.WriteLine("pricer get <location_id> <type> <timespan> <filepath>");
+                Console.WriteLine("pricer get <location_id> <type> <timespan> <filepath> <hemnet|booli>");
                 return;
             }
 

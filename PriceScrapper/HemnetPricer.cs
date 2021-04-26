@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
+using System.Globalization;
 
 namespace PriceScrapper
 {
@@ -101,7 +102,7 @@ namespace PriceScrapper
                         var result = await content.ReadAsStringAsync();
                         var document = new HtmlDocument();
                         document.LoadHtml(result);
-                        var resultNodes = document.DocumentNode.SelectNodes("//li[@class='sold-results__normal-hit']/div");
+                        var resultNodes = document.DocumentNode.SelectNodes("//div[@class='sold-property-listing']");
 
                         if (resultNodes == null)
                         {
@@ -112,7 +113,6 @@ namespace PriceScrapper
 
                         foreach (var node in resultNodes)
                         {
-
                             PriceInfo priceInfo = new PriceInfo();
                             bool isAdd = true;
                             foreach (var property in node.ChildNodes)
@@ -126,7 +126,7 @@ namespace PriceScrapper
                                 {
                                     case "sold-property-listing__location":
                                         {
-                                            priceInfo.Address = property.SelectSingleNode("./h2/span[@class='item-result-meta-attribute-is-bold item-link']").InnerText.Trim();
+                                            priceInfo.Address = property.SelectSingleNode("./h2/span[@class='item-result-meta-attribute-is-bold item-link qa-selling-price-title']").InnerText.Trim();
                                             priceInfo.Area = property.SelectSingleNode("./div/span[@class='item-link']")?.InnerText.Replace(",", "").Trim();
                                             priceInfo.City = property.SelectSingleNode("./div/text()[last()]")?.InnerText.Trim();
                                             break;
@@ -158,7 +158,7 @@ namespace PriceScrapper
                                             if (yardNode != null)
                                             {
                                                 var yardString = yardNode.InnerText.Trim().Split("&nbsp;");
-                                                priceInfo.YardSize = double.Parse(yardString[0].Replace(" ", "").Trim());
+                                                priceInfo.YardSize = double.Parse(yardString[0].Replace(" ", "").Trim());
                                             }
 
                                             // Bi Size
@@ -166,7 +166,7 @@ namespace PriceScrapper
                                             if (biNode != null)
                                             {
                                                 var biString = biNode.InnerText.Trim().Split("&nbsp;");
-                                                priceInfo.BiSize = double.Parse(biString[0].Replace(" ", "").Trim());
+                                                priceInfo.BiSize = double.Parse(biString[0].Replace(" ", "").Trim());
                                             }
 
                                             break;
@@ -176,12 +176,13 @@ namespace PriceScrapper
                                             // Price
                                             var priceNode = property.SelectSingleNode("./div[1]/span").InnerText.Trim().Replace("&nbsp;", "");
                                             var priceString = priceNode.Split(" ");
-                                            priceInfo.Price = double.Parse(priceString[1]);
+                                            priceInfo.Price = double.Parse(priceString[1].Replace(" ", ""));
 
                                             // Time
                                             var timeNode = property.SelectSingleNode("./div[2]").InnerText.Trim().Replace("&nbsp;", "");
                                             var timeString = timeNode.Substring(priceNode.IndexOf("Såld") + 5);
-                                            if (!DateTime.TryParse(timeString, out priceInfo.SoldTime))
+                                            var culture = new CultureInfo("pt-BR");
+                                            if (!DateTime.TryParse(timeString, new CultureInfo("sv-SE"), 0, out priceInfo.SoldTime))
                                             {
                                                 timeNode = property.SelectSingleNode("./div[2]/div[1]").InnerText.Trim().Replace("&nbsp;", "");
                                                 timeString = timeNode.Substring(priceNode.IndexOf("Såld") + 5);
